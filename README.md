@@ -1,4 +1,4 @@
-# Lab 1 — k-means parallelization in Python
+# k-means parallelization in Python
 
 Master in Big Data — *Technological Fundamentals in the Big Data World*.
 
@@ -249,3 +249,8 @@ importing it from a shared module that could not be delivered.
 | Type-check          | `pyright`                    |
 | Run every hook      | `pre-commit run --all-files` |
 | Update hook pins    | `pre-commit autoupdate`      |
+
+---
+## Authors
+
+[Javier Patricio Luján Romero](https://github.com/javilujann), Elena Fernández Sedes, Miriam Alonso Cañete and [Daniel Lozano Uceda](https://github.com/dalouc)
