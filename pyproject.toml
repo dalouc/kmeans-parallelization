@@ -1,0 +1,171 @@
+# This project is not a distributable package, so it needs neither a [project]
+# nor a [build-system] table: pyproject.toml is used purely for tool
+# configuration and for the development dependency group below.
+# Install everything with:  python -m pip install --group dev
+
+[dependency-groups]
+# Libraries the lab program itself needs at run time.
+run = [
+    "matplotlib>=3.10",
+    "numpy>=2.3",
+    "pandas>=2.3",
+]
+dev = [
+    { include-group = "run" },
+    "pandas-stubs>=2.2",
+    "pre-commit>=4.6",
+    "pyright>=1.1.414",
+    "ruff>=0.16.7",
+]
+
+# --------------------------------------------------------------------------- #
+# Ruff — linter + formatter (replaces flake8, isort, pyupgrade, black, ...)    #
+# This block is intentionally identical in every template, so moving from one  #
+# template to another never means re-learning the lint rules.                  #
+# --------------------------------------------------------------------------- #
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+src = ["."]
+# Provided by the course and delivered untouched: never linted, never formatted.
+extend-exclude = ["proteins-generator.py"]
+
+[tool.ruff.lint]
+# An explicit, curated selection. Prefer this over `select = ["ALL"]`: new Ruff
+# releases cannot silently break your CI, and every rule here is a deliberate
+# choice. Run `ruff rule <CODE>` to see what any of them does.
+select = [
+    "F",     # pyflakes: real errors (undefined names, unused imports, ...)
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "I",     # isort: import sorting
+    "N",     # pep8-naming
+    "D",     # pydocstyle: docstring style (content only, see `ignore = D1`)
+    "UP",    # pyupgrade: keep syntax modern for the target Python
+    "ANN",   # flake8-annotations: every signature is annotated
+    "ASYNC", # flake8-async: blocking calls inside async functions
+    "S",     # flake8-bandit: common security footguns
+    "BLE",   # flake8-blind-except: no bare `except Exception`
+    "FBT",   # flake8-boolean-trap: no positional boolean arguments
+    "B",     # flake8-bugbear: likely bugs and design problems
+    "A",     # flake8-builtins: no shadowing of builtins
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez: no naive datetimes
+    "T10",   # flake8-debugger: no leftover breakpoints
+    "EM",    # flake8-errmsg: exception messages in a variable (clean tracebacks)
+    "EXE",   # flake8-executable: shebang/permission mismatches
+    "FA",    # flake8-future-annotations
+    "ISC",   # flake8-implicit-str-concat
+    "ICN",   # flake8-import-conventions: `import numpy as np`, ...
+    "LOG",   # flake8-logging
+    "G",     # flake8-logging-format: no f-strings in log calls
+    "INP",   # flake8-no-pep420: no accidental implicit namespace packages
+    "PIE",   # flake8-pie: misc. simplifications
+    "T20",   # flake8-print: no stray print()/pprint()
+    "PYI",   # flake8-pyi: stub-file correctness
+    "PT",    # flake8-pytest-style
+    "RSE",   # flake8-raise
+    "RET",   # flake8-return
+    "SLF",   # flake8-self: no private-member access across objects
+    "SIM",   # flake8-simplify
+    "SLOT",  # flake8-slots
+    "TID",   # flake8-tidy-imports
+    "TC",    # flake8-type-checking: keep typing-only imports out of runtime
+    "ARG",   # flake8-unused-arguments
+    "PTH",   # flake8-use-pathlib: pathlib over os.path
+    "ERA",   # eradicate: no commented-out code
+    "PGH",   # pygrep-hooks: no blanket `# noqa` / `# type: ignore`
+    "PL",    # pylint (C/E/R/W subset ported to Ruff)
+    "TRY",   # tryceratops: exception-handling antipatterns
+    "FLY",   # flynt: f-strings over str.join
+    "PERF",  # perflint
+    "FURB",  # refurb: modern idioms
+    "RUF",   # Ruff-specific rules
+]
+ignore = [
+    # Docstrings are encouraged, not mandatory. Drop this line to require a
+    # docstring on every module, class and function.
+    "D1",
+    # Line length is the formatter's job; the linter flagging it too is noise.
+    "E501",
+    # Rules that conflict with `ruff format` (see the Ruff formatter docs).
+    "W191",   # tab indentation
+    "E111",   # indentation not a multiple of four
+    "E114",   # comment indentation not a multiple of four
+    "E117",   # over-indented
+    "D206",   # docstring indented with tabs
+    "D300",   # triple single quotes
+    "ISC001", # single-line implicit string concatenation
+]
+
+[tool.ruff.lint.per-file-ignores]
+# CLI entry points are allowed to write to stdout.
+"**/__main__.py" = ["T201"]
+# The lab mandates these exact script names, which are not valid module names.
+"lab1-proteins-serial.py" = ["N999", "T201"]
+"lab1-proteins-mp.py" = ["N999", "T201"]
+"lab1-proteins-th.py" = ["N999", "T201"]
+# Test-suite carve-outs. Kept here in every template so that adding a `tests/`
+# directory later never requires touching the lint configuration.
+"tests/**/*.py" = [
+    "INP001",  # tests are deliberately not a package
+    "S101",    # assert is how pytest works
+    "PLR2004", # magic values are fine in assertions
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+# Format code examples inside docstrings too.
+docstring-code-format = true
+
+# --------------------------------------------------------------------------- #
+# Pyright — static type checking, as strict as is practical                   #
+# `strict` is Pyright's strongest preset; everything below it turns on checks  #
+# that even `strict` leaves off. The intent: no implicit Any, no unchecked     #
+# escape hatches, every symbol has a known type.                               #
+# --------------------------------------------------------------------------- #
+[tool.pyright]
+include = [
+    "lab1-proteins-serial.py",
+    "lab1-proteins-mp.py",
+    "lab1-proteins-th.py",
+]
+pythonVersion = "3.14"
+pythonPlatform = "All"
+typeCheckingMode = "strict"
+
+# So that `pyright` finds NumPy, pandas and matplotlib without the virtualenv
+# having to be activated first.
+venvPath = "."
+venv = ".venv"
+
+# --- Relaxed for untyped third-party code ---------------------------------- #
+# `matplotlib.pyplot` types its keyword arguments as `Unknown`, and pandas
+# ships no stubs, so every plotting or DataFrame call would need a suppression
+# of its own. The lab's own code stays fully annotated and checked.
+reportMissingTypeStubs = "none"
+reportUnknownMemberType = "none"
+
+# --- Stricter than `strict` ------------------------------------------------ #
+deprecateTypingAliases = true             # typing.List -> list, etc.
+reportImplicitOverride = "error"          # subclass overrides need @override
+reportImportCycles = "error"
+reportPropertyTypeMismatch = "error"
+reportUninitializedInstanceVariable = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportUnreachable = "error"
+
+# --- No silent escape hatches ---------------------------------------------- #
+# `# type: ignore` is disabled entirely: suppressions must name the rule they
+# suppress, i.e. `# pyright: ignore[reportUnknownMemberType]`. Combined with
+# reportUnnecessaryTypeIgnoreComment above, stale suppressions become errors.
+enableTypeIgnoreComments = false
+
+# Left off on purpose, and the reason each one is not worth it:
+#   reportUnusedCallResult  - every ignored return value becomes an error.
+#   reportMissingSuperCall  - fires on plain classes that derive from object,
+#                             where `super().__init__()` is pure boilerplate.
+#   reportCallInDefaultInitializer - already covered by Ruff's B008.
+# `typeCheckingMode = "all"` turns all three on if you disagree.

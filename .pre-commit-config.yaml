@@ -1,0 +1,36 @@
+# Install the git hook once per clone:  pre-commit install
+# Update every hook to its latest tag:  pre-commit autoupdate
+# Run against the whole repository:     pre-commit run --all-files
+# Course-provided file: delivered byte for byte, so no hook may rewrite it.
+exclude: ^proteins-generator\.py$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.7
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  # Pyright is run as a local hook on purpose: it has to see the dependencies
+  # installed in your virtualenv, which an isolated pre-commit environment
+  # cannot. Activate the venv (`source .venv/bin/activate`) before committing.
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: pyright
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
