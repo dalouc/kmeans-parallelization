@@ -7,30 +7,6 @@ Each row is `protid,enzyme,hydrofob,sequence`: a 1-based id, an EC number in
 1..10, a hydrophobicity drawn from a range that the EC number selects, and a
 residue string over the eight letters A..H. Roughly one row in eight gets a
 known motif prefixed to its sequence.
-
-For any given `<lines> <seed>` the output is byte for byte what the original
-course generator produced. That is the correctness contract, and it is what
-makes the rewrite below safe: the file is regenerated from a seed rather than
-committed, so a changed byte would silently change every published measurement.
-
-Why it is written this way
---------------------------
-Every draw the generator needs is `random._randbelow(n)` for some small `n`:
-`randrange(1, 256, 8)` is `1 + 8 * below(32)`, `randint(a, b)` is
-`a + below(b - a + 1)`, and `choice` over the eight residues is `below(8)`.
-For `n < 256`, `below` asks Mersenne Twister for `getrandbits(k)` with
-`k = n.bit_length() <= 8`, which burns one whole 32-bit word and keeps only its
-top `k` bits, retrying while the result lands outside `[0, n)`.
-
-So the whole program is a walk along one sequence of 32-bit words that never
-looks past the top byte of each. `randbytes(4 * m)` draws `m` words at once and
-lays them down little-endian, so `[3::4]` of those bytes is exactly the top
-byte of every word. Working a batch at a time turns the hot path into plain
-integer compares on a `bytes`, and lets the residues of a whole sequence be
-sliced out pre-translated instead of drawn one letter at a time: a sequence is
-just the next run of words whose top byte is < 128, so `positions` and
-`residues` (below) resolve it in two indexing operations. Rows are formatted
-into a `bytearray` and written out in multi-megabyte blocks.
 """
 
 # S311: a reproducible pseudo-random dataset is the entire point of this
@@ -98,6 +74,22 @@ def refill(rng: random.Random, carry: bytes) -> tuple[bytes, bytes, bytes, np.nd
     Returns the top byte of each word, the top bytes of just the accepted
     words, those same bytes translated to residue letters, and the position of
     each accepted word within the batch.
+
+    Args:
+        rng: Mersenne Twister the batch of `WORDS_PER_BATCH` words is drawn
+            from.
+        carry: Top bytes left unconsumed at the end of the previous batch,
+            placed before the new ones so a replayed row sees them first.
+
+    Returns:
+        A `(tops, accepted, residues, positions)` tuple:
+
+        - `tops`: the top byte of every word, `carry` included, as `bytes`.
+        - `accepted`: the subset of those bytes below `ACCEPTED`, as `bytes`.
+        - `residues`: `accepted` translated through `RESIDUE`, one letter
+          per accepted word, as `bytes`.
+        - `positions`: the index of each accepted word within `tops`, as an
+          `np.ndarray` of `np.intp`.
     """
     tops = carry + rng.randbytes(4 * WORDS_PER_BATCH)[3::4]
     words = np.frombuffer(tops, np.uint8)
@@ -107,7 +99,17 @@ def refill(rng: random.Random, carry: bytes) -> tuple[bytes, bytes, bytes, np.nd
 
 
 def generate(handle: BinaryIO, rng: random.Random, lines: int) -> None:
-    """Write `lines` rows to `handle`, drawing from `rng`."""
+    """Write `lines` rows to `handle`, drawing from `rng`.
+
+    Args:
+        handle: Binary file the rows are written to, in batches of at least
+            `FLUSH_BYTES` bytes. The header is not written here.
+        rng: Mersenne Twister every field is drawn from, by way of `refill`.
+        lines: Number of rows to write; the ids run from 1 to `lines`.
+
+    Returns:
+        None. The rows are written to `handle`.
+    """
     tops, accepted, residues, positions = refill(rng, b"")
     where = positions.item
 
@@ -173,6 +175,7 @@ def generate(handle: BinaryIO, rng: random.Random, lines: int) -> None:
 
 
 def main() -> None:
+    """Read `<lines>` and `<seed>` from `sys.argv` and write `proteins.csv`."""
     lines = int(sys.argv[1])
     seed = int(sys.argv[2])
     # The original echoed its line count; `sys.stdout.write` rather than
