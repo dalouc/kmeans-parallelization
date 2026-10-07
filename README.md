@@ -19,9 +19,8 @@ them printed the same `k`, the same cluster and the same averages.
 
 ## Dataset
 
-The dataset is produced by `proteins-generator.py`, which is course material
-and is kept byte for byte as it was handed out (the lint and format hooks skip
-it). It writes `proteins.csv` into the current directory:
+The dataset is produced by `proteins-generator.py`, which writes `proteins.csv`
+into the current directory:
 
 ```bash
 python proteins-generator.py 50000 42      # development
@@ -29,6 +28,12 @@ python proteins-generator.py 2000000 42    # performance measurements
 ```
 
 `proteins.csv` is not committed.
+
+The generator is a rewrite of the one handed out with the course: same command
+line, and for any `<lines> <seed>` the same output bytes, so the dataset behind
+every measurement below is unchanged. It draws Mersenne Twister's words in bulk
+instead of one `random` call at a time, which brings the two-million-row
+dataset down from 67 s to 5.6 s.
 
 ## Running
 
@@ -227,7 +232,7 @@ than processes.
 ├── lab1-proteins-serial.py   # part one, serial
 ├── lab1-proteins-th.py       # part three, threads
 ├── proteins.csv              # generated, not committed
-├── proteins-generator.py     # course material, untouched
+├── proteins-generator.py     # rewritten, same output bytes
 ├── pyproject.toml            # every tool is configured here
 └── README.md
 ```

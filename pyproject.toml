@@ -27,8 +27,6 @@ dev = [
 line-length = 88
 target-version = "py314"
 src = ["."]
-# Provided by the course and delivered untouched: never linted, never formatted.
-extend-exclude = ["proteins-generator.py"]
 
 [tool.ruff.lint]
 # An explicit, curated selection. Prefer this over `select = ["ALL"]`: new Ruff
