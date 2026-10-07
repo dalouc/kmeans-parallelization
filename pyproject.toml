@@ -1,6 +1,6 @@
 # This project is not a distributable package, so it needs neither a [project]
 # nor a [build-system] table: pyproject.toml is used purely for tool
-# configuration and for the development dependency group below.
+# configuration and for the dependency groups below.
 # Install everything with:  python -m pip install --group dev
 
 [dependency-groups]
@@ -10,12 +10,26 @@ run = [
     "numpy>=2.3",
     "pandas>=2.3",
 ]
-dev = [
+# Linters and formatters, and nothing else: they only ever read the source,
+# never import it, so CI's lint job can install this group alone and skip
+# building NumPy, pandas and matplotlib.
+lint = [
+    "ruff>=0.16.7",
+]
+# Pyright does not import the code either, but it does read the types of the
+# libraries it calls into, so this group needs the run-time dependencies.
+typecheck = [
     { include-group = "run" },
     "pandas-stubs>=2.2",
-    "pre-commit>=4.6",
     "pyright>=1.1.414",
-    "ruff>=0.16.7",
+]
+# Everything a contributor needs: both CI tool groups, plus the git-hook runner,
+# which is the one tool here that never runs in CI.
+dev = [
+    { include-group = "run" },
+    { include-group = "lint" },
+    { include-group = "typecheck" },
+    "pre-commit>=4.6",
 ]
 
 # --------------------------------------------------------------------------- #
