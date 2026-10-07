@@ -51,3 +51,29 @@ jobs:
         run: python -m pip install --group typecheck
       - name: Pyright
         run: pyright
+
+  hygiene:
+    name: File hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies
+        run: python -m pip install pre-commit
+      - name: Cache pre-commit hook environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ env.PYTHON_VERSION }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      # Ruff and Pyright have jobs of their own above, so this job runs only
+      # the hooks that nothing else in CI covers: the whitespace, line-ending
+      # and file-validity checks. Listing the skips (rather than the hooks to
+      # run) means a hook added to the config later is covered automatically.
+      - name: Pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+        env:
+          SKIP: ruff-check,ruff-format,pyright

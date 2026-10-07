@@ -13,8 +13,12 @@ run = [
 # Linters and formatters, and nothing else: they only ever read the source,
 # never import it, so CI's lint job can install this group alone and skip
 # building NumPy, pandas and matplotlib.
+# Pinned exactly, and kept in step with the `rev` of the ruff-pre-commit
+# repo in .pre-commit-config.yaml: a floating version would let the git hook
+# and CI run different Ruff releases, so a commit could pass locally and fail
+# in CI. `pre-commit autoupdate` bumps the hook; bump this line to match.
 lint = [
-    "ruff>=0.16.7",
+    "ruff==0.16.10",
 ]
 # Pyright does not import the code either, but it does read the types of the
 # libraries it calls into, so this group needs the run-time dependencies.
