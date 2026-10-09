@@ -27,13 +27,20 @@ typecheck = [
     "pandas-stubs>=2.2",
     "pyright>=1.1.414",
 ]
-# Everything a contributor needs: both CI tool groups, plus the git-hook runner,
-# which is the one tool here that never runs in CI.
+# The hook runner, for the file-hygiene checks in .pre-commit-config.yaml. It
+# builds each hook's environment itself, so this group needs nothing else: the
+# Ruff and Pyright hooks are skipped in CI, where those tools have jobs of
+# their own.
+hygiene = [
+    "pre-commit>=4.6",
+]
+# Everything a contributor needs: every CI tool group, so that `pre-commit
+# install` and all three CI jobs can be reproduced locally.
 dev = [
     { include-group = "run" },
     { include-group = "lint" },
     { include-group = "typecheck" },
-    "pre-commit>=4.6",
+    { include-group = "hygiene" },
 ]
 
 # --------------------------------------------------------------------------- #
